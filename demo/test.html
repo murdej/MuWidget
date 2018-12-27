@@ -1,0 +1,54 @@
+<html>
+	<head>
+	</head>
+	<body>
+		<div mu-widget="Foo" mu-id="foo">
+			<button mu-id="btn">Foo button</button>
+			<button mu-id="btnMoo">Moo button</button>
+			<span mu-id="fooLabel"></span>
+			<div mu-widget="Bar" mu-id="barTemplate">
+				<button mu-id="btn" mu-click="barButtonAction">Bar button</button>
+				<span mu-id="barLabel"></span>
+			</div>
+			<div mu-id="barContainer"></div>
+		</div>
+	</body>
+	<!-- <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script> -->
+	<script src="../src/MuWidget.js"></script>
+	<script>
+		Foo = function(element, opts) 
+		{ 
+			this.counter = 0;
+			this.template = element.outerHTML;
+		};
+		Foo.prototype = {
+			btn_click: function()
+			{
+				this.ui.fooLabel.innerText = this.ui.btn.innerText + " " + this.counter++;
+				var newBar = htmlFromString(this.ui.barTemplate.outerHTML);
+				this.muActivateWidget(newBar);
+				this.ui.barContainer.appendChild(newBar);
+			},
+			btnMoo_click: function()
+			{
+				var newFoo = htmlFromString(this.template);
+				this.muActivateWidget(newFoo);
+				this.ui.barContainer.appendChild(newFoo);
+			}
+		}
+
+		Bar = function() 		
+		{ 
+			this.counter = 0;
+		};
+
+		Bar.prototype = {
+			barButtonAction: function() 
+			{
+				this.ui.barLabel.innerText = this.ui.btn.innerText + " " + this.counter++;
+			}
+		};
+
+		var rootWidget = new MuWidget(document.getElementsByTagName('body')[0]);
+	</script>
+</html>
