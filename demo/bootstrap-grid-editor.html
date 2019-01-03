@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Bootstrap grid builder</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+</head>
+<body>
+	<h1>Hello!</h1>
+	<div mu-widget="BsMain">
+
+		<div mu-id="templateContent" mu-nocontent="1">
+			<div mu-widget="BsContent">
+				<div class="toolbar">
+					<span class="btn btn-small btn-default" mu-id="add">Add row</span>
+				</div>
+				<div mu-id="content"></div>
+			</div>
+		</div>
+
+		<div mu-id="templateRow" mu-nocontent="1">
+			<div mu-widget="BsRow">
+				<div class="toolbar">
+					<span class="btn btn-small btn-default" mu-id="add">Add column</span>
+				</div>
+				<div mu-id="content"></div>
+			</div>
+		</div>
+
+		<div mu-id="templateColumn" mu-nocontent="1">
+			<div mu-widget="BsColumn">
+				<div class="toolbar">
+					<span class="btn btn-small btn-default" mu-id="add">Add row</span>
+				</div>
+				<div mu-id="content"></div>
+			</div>
+		</div>
+	</div>	
+	
+	<script src="../src/MuWidget.js"></script>
+	<script>
+		BsMain = function(element, opts, parent) 
+		{
+			this.templates = {
+				Content: null,
+				Row: null,
+				Column: null,
+			};
+		};
+		BsMain.prototype = {
+			afterIndex: function()
+			{
+				for(var n in this.templates)
+				{
+					this.templates[n] = this.ui['template' + n].innerHTML;
+					this.ui['template' + n].style.display = "none";
+				}
+				this.ui.rootContent.mainWidget = this;
+			}
+		}
+
+		// Placeholder for rows
+		BsContent = function(element, opts, parent) {}
+		BsContent.prototype = {
+			add_click: function()
+			{
+				alert('hovnival');
+			}
+		}
+
+		BsRow = function(element, opts, parent) 
+		{ 
+		};
+		/*Foo.prototype = {
+			btAddCol_click: function()
+			{
+			},
+			btnMoo_click: function()
+			{
+				var newFoo = htmlFromString(this.template);
+				this.muActivateWidget(newFoo);
+				this.ui.barContainer.appendChild(newFoo);
+			}
+		}
+
+		Bar = function() 		
+		{ 
+			this.counter = 0;
+		};
+
+		Bar.prototype = {
+			barButtonAction: function() 
+			{
+				this.ui.barLabel.innerText = this.ui.btn.innerText + " " + this.counter++;
+			}
+		}; */
+
+		var rootWidget = new MuWidget(document.getElementsByTagName('body')[0]);
+	</script>
+</body>
+</html>

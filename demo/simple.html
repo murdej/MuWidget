@@ -1,0 +1,41 @@
+<html>
+	<body>
+		<h2>Click counter</h2>
+		<div mu-widget="ClickCounter" mu-params='{"maxClickCount": 10}'>
+			<button mu-id="btn">Click me</button>
+			Clicked <span mu-id="clickCount"></span> times.
+		</div>
+	</body>
+	<!-- <script src="https://cdn.jsdelivr.net/gh/murdej/MuWidget/src/MuWidget.js"></script> -->
+	<script src="../src/MuWidget.js"></script>
+	<script>
+		ClickCounter = function() 
+		{ 
+			this.clickCount = 0;
+			this.maxClickCount = null;
+		};
+		ClickCounter.prototype = {
+			btn_click: function()
+			{
+				this.clickCount++;
+				this.updateView();
+				if (this.maxClickCount && this.clickCount >= this.maxClickCount)
+				{
+					this.ui.btn.disabled = true;
+				}
+			},
+			updateView: function()
+			{
+				this.ui.clickCount.innerText = this.clickCount;
+			},
+			afterIndex: function()
+			{
+				this.updateView();
+			}
+		}
+		window.onload = function()
+		{
+			new MuWidget(document.getElementsByTagName('body')[0]);
+		}
+	</script>
+</html>

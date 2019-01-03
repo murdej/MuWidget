@@ -20,9 +20,10 @@ MuWidget.prototype = {
 			},
 			opts ? opts : {}
 		);
-		this.muIndexTree(container, true);
 		this.container = container;
 		this.container.widget = this;
+
+		this.muIndexTree(container, true);
 	},
 
 	muIndexTree: function(element, indexWidget)
@@ -31,7 +32,7 @@ MuWidget.prototype = {
 		if (opts.noindex) return;
 		if (opts.id) this.muAddUi(opts.id, element);
 		this.muAddEvents(opts, element);
-		if (!opts.widget || indexWidget) 
+		if ((!opts.widget || indexWidget) && !opts.nocontent) 
 		{
 			// Index children
 			var elements = element.children;
@@ -40,22 +41,29 @@ MuWidget.prototype = {
 				this.muIndexTree(elements[i]);
 			}
 		}
-		else
+		if (opts.widget && !indexWidget)
 		{
 			// Initialize widget
 			this.muActivateWidget(element, opts);
 		}
+		if (indexWidget && this['afterIndex']) this.afterIndex();
 	},
 
 	muActivateWidget: function(element, opts)
 	{
 		if (opts === undefined) opts = this.muGetElementOpts(element);
-		var widget = new window[opts.widget](element, opts);
-		/* widget.inherid = MuWidget;
-		widget.inherid(element, opts.opts || this.muOpts); */
+		var widget = new window[opts.widget](element, opts, this);
+		if (opts.params)
+		{
+			var params = JSON.parse(opts.params);
+			for(var k in params)
+			{
+				widget[k] = params[k];
+			}
+		}
 		MuWidget.extendPrototype(widget);
-		MuWidget.call(widget, element, opts.opts || this.muOpts);
 		widget.parent = this;
+		MuWidget.call(widget, element, opts.opts || this.muOpts);
 	},
 
 	muGetElementOpts: function(element)
