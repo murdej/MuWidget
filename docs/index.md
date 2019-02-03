@@ -81,3 +81,7 @@ MuWidget options
 | `attributePrefix` | Prefix for HTML element parameters | `'mu-'`
 | `bindEvents` 	| List of events to bind | `['click', 'dblclick', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'blur', 'change', 'focus', 'select', 'submit', 'keyup', 'keydown', 'scroll']`
 | `autoMethodNameSeparator` 	| id / event separator for autobinded methods | `'_'`
+
+Indexing html elements
+==
+

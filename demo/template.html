@@ -1,0 +1,36 @@
+<html>
+	<body>
+		<h2>Template demo</h2>
+		<div mu-widget="List">
+			<input mu-id="text" type="text" />
+			<button mu-id="btn">Click me</button>
+			<ul mu-id="list">
+				<li mu-template="item" mu-widget="ListItem"></li>
+			</ul>
+		</div>
+	</body>
+	<script src="../src/MuWidget.js"></script>
+	<script>
+		List = function() { };
+		List.prototype = {
+			btn_click: function()
+			{
+				var newWidget = this.muWidgetFromTemplate('item', 'list');
+				newWidget.setText(this.ui.text.value);
+			},
+		}
+
+		ListItem = function() { };
+		ListItem.prototype = {
+			setText: function(text)
+			{
+				this.container.innerText = text;
+			},
+		}
+
+		window.onload = function()
+		{
+			new MuWidget(document.getElementsByTagName('body')[0]);
+		}
+	</script>
+</html>

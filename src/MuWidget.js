@@ -22,6 +22,8 @@ MuWidget.prototype = {
 		);
 		this.container = container;
 		this.container.widget = this;
+		this.muSubWidgets = [];
+		this.muTemplates = [];
 
 		this.muIndexTree(container, true);
 	},
@@ -30,6 +32,13 @@ MuWidget.prototype = {
 	{
 		var opts = this.muGetElementOpts(element);
 		if (opts.noindex) return;
+		if (opts.template) 
+		{
+			element.removeAttribute(this.muOpts.attributePrefix + "template");
+			this.muTemplates[opts.template] = element.outerHTML;
+			element.parentNode.removeChild(element);
+			return;
+		}
 		if (opts.id) this.muAddUi(opts.id, element);
 		this.muAddEvents(opts, element);
 		if ((!opts.widget || indexWidget) && !opts.nocontent) 
@@ -61,9 +70,25 @@ MuWidget.prototype = {
 				widget[k] = params[k];
 			}
 		}
+		widget.muParent = this;
 		MuWidget.extendPrototype(widget);
-		widget.parent = this;
+		this.muSubWidgets.push(widget);
 		MuWidget.call(widget, element, opts.opts || this.muOpts);
+
+		return widget;
+	},
+
+	muWidgetFromTemplate: function(templateName, container)
+	{
+		if (typeof container == 'string') container = this.ui[container];
+		
+		var element = document.createElement('div');
+		element.innerHTML = this.muTemplates[templateName];
+		element = element.firstChild; 
+		
+		if (container) container.appendChild(element);
+
+		return this.muActivateWidget(element);
 	},
 
 	muGetElementOpts: function(element)
