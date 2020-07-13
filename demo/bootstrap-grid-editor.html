@@ -10,32 +10,26 @@
 	<h1>Hello!</h1>
 	<div mu-widget="BsMain">
 
-		<div mu-id="templateContent" mu-nocontent="1">
-			<div mu-widget="BsContent">
+			<div mu-template="bsContent" mu-widget="BsContent">
 				<div class="toolbar">
 					<span class="btn btn-small btn-default" mu-id="add">Add row</span>
 				</div>
 				<div mu-id="content"></div>
 			</div>
-		</div>
 
-		<div mu-id="templateRow" mu-nocontent="1">
-			<div mu-widget="BsRow">
+			<div mu-template="bsRow" mu-widget="BsRow">
 				<div class="toolbar">
 					<span class="btn btn-small btn-default" mu-id="add">Add column</span>
 				</div>
 				<div mu-id="content"></div>
 			</div>
-		</div>
 
-		<div mu-id="templateColumn" mu-nocontent="1">
-			<div mu-widget="BsColumn">
+			<div mu-template="bsColumn" mu-widget="BsColumn">
 				<div class="toolbar">
 					<span class="btn btn-small btn-default" mu-id="add">Add row</span>
 				</div>
 				<div mu-id="content"></div>
 			</div>
-		</div>
 	</div>	
 	
 	<script src="../src/MuWidget.js"></script>

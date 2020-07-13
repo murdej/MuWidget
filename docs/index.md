@@ -1,5 +1,5 @@
-The simple examples
-==
+# The simple examples
+
 ```html
 ...
 <div mu-widget="ClickCounter" mu-params='{"maxClickCount": 10}'>
@@ -55,16 +55,37 @@ window.onload = function()
 ```
 
 
-HTML element parameters
-=======================
+# HTML element parameters
 
-|||
-|-|-|
-| `mu-id` 			| Unique identifier in current widget scope.
-| `mu-widget`		| Widget service class
-| `mu-noindex`		| Do not index this and nested elements 
-| `mu-nocontent`	| Do not index nested elements
-| `mu-params`		| Parameters passed to the service class in JSON format
+## `mu-id` 
+Unique identifier in current widget scope.
+
+After indexing, the html element will be available in the collection `this.ui` under its `mu-id`.
+
+```html
+<span mu-id="label"></label>
+```
+
+```javascript
+this.ui.label.innerText = "Hello world";
+```
+
+## `mu-widget`
+Widget service class. If you encounter this attribute when you index it, this will happen:
+
+1. The specified class will be extended to the prototype MuWidget
+2. Creates an instance of the specified class
+3. The property is set
+4. The afterIndex method is called
+
+## `mu-noindex`
+Do not index this and nested elements.
+
+## `mu-nocontent`
+Do not index nested elements. 
+
+## `mu-params`
+Parameters passed to the service class in JSON format
 
 MuWidget constructor parameters
 ==
