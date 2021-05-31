@@ -13,7 +13,9 @@
 	You should have received a copy of the GNU General Public License
 	along with MuWidget.  If not, see <https://www.gnu.org/licenses/>. */
 
-var autostart = MuWidget && MuWidget.autostart;
+// var autostart = MuWidget && MuWidget.autostart;
+
+// if (!window.MuWidgetPlugIns) window.MuWidgetPlugIns = [];
 
 var MuWidget = function(container, opts)
 {
@@ -28,6 +30,7 @@ MuWidget.extendPrototype = function(prototype)
 MuWidget.prototype = {
 	muInit: function(container, opts)
 	{
+		this.muOnAfterIndex = [];
 		this.ui = {};
 		this.muOpts = this.muMergeObjects(
 			{
@@ -41,12 +44,44 @@ MuWidget.prototype = {
 		this.container.widget = this;
 		this.muSubWidgets = [];
 		this.muNamedWidget = {};
-		this.muTemplates = [];
+		this.muTemplates = {};
+		this.muTemplateParents = {};
 		this.muRoot = null;
+		this.muWidgetEventHandlers = {};
 
 		if (this['beforeIndex']) this.beforeIndex();
 		this.muAddEvents({ id: 'container' }, this.container);
 		this.muIndexTree(container, true);
+	},
+
+	muDispatchEvent: function (name)
+	{
+		if (!(name in this.muWidgetEventHandlers)) throw new Error("Unknown event '" + name + "' on class '" + this.constructor.name + "'.");
+		if (this.muWidgetEventHandlers[name])
+		{
+			var args = Array.from(arguments);
+			args[0] = {
+				sender: this
+			};
+			for(var i = 0; i < this.muWidgetEventHandlers[name].length; i++)
+				this.muWidgetEventHandlers[name][i].apply(this, args);
+		}
+	},
+
+	muRegisterEvent: function()
+	{
+		for(var i = 0; i < arguments.length; i++) this.muWidgetEventHandlers[arguments[i]] = [];
+	},
+
+	addEventListener: function(name, handler)
+	{
+		if (!(name in this.muWidgetEventHandlers)) throw new Error("Unknown event '" + name + "' on class '" + this.constructor.name + "'.");
+		this.muWidgetEventHandlers[name].push(handler);
+	},
+
+	muEventNames: function ()
+	{
+		return Object.keys(this.muWidgetEventHandlers);
 	},
 
 	muIndexTree: function(element, indexWidget, useName)
@@ -57,6 +92,61 @@ MuWidget.prototype = {
 		element = ev.element;
 
 		var opts = ev.opts || this.muGetElementOpts(element);
+		if (opts.preproc)
+		{
+			/* var pl = opts.preproc.indexOf("[");
+			var pd = opts.preproc.indexOf("{");
+			var mode = null;
+			var p;
+			if (pl >= 0 && pd >= 0)
+			{
+				// mode = pl < pd ? "function" : "class";
+				p = Math.min(pl, pd);
+			}
+			else
+			{
+				// mode = pd >= 0 ? "class" : "function";
+				p = Math.max(pl, pd);
+			} */
+			var p = opts.preproc.indexOf(" ");
+			var name = opts.preproc;
+			var paramsStr = "";
+
+			if (p >= 0)
+			{
+				var name = opts.preproc.substr(0, p);
+				var paramsStr = opts.preproc.substr(p);
+			}
+
+			if (!(name in MuWidget.preproc)) throw new Error("Preproc '" + name + '" not defined.');
+
+			var pp = MuWidget.preproc[name];
+			mode = pp.prototype.preproc ? "class" : "function";
+			if (mode === "function")
+				paramsStr = "[" + paramsStr + "]";
+			else
+				paramsStr = "{" + paramsStr + "}";
+
+			try {
+				var params = paramsStr ? JSON.parse(paramsStr) : null;
+			}
+			catch (exc)
+			{
+				throw new Erro(exc.toString() + "\n" + paramsStr)
+			}
+
+			if (mode === "function")
+			{
+				params.unshift(element);
+				pp.call(null, params);
+			}
+			else
+			{
+				var inst = new pp();
+				for(var k in params) inst[k] = params[k];
+				inst.preproc(element);
+			}
+		}
 		this.muIndexOpts = opts;
 		useName = useName || opts.usename;
 		if (useName && element.attributes["name"]) opts.id = element.attributes["name"];
@@ -65,12 +155,15 @@ MuWidget.prototype = {
 		{
 			element.removeAttribute(this.muOpts.attributePrefix + "template");
 			this.muTemplates[opts.template] = element.outerHTML;
+			this.muTemplateParents[opts.template] = element.parentNode;
 			element.parentNode.removeChild(element);
 			return;
 		}
 		if (opts.id) this.muAddUi(opts.id, element);
-		this.muAddEvents(opts, element);
-		if ((!opts.widget || indexWidget) && !opts.nocontent && element.children) 
+		// if (opts.bind) this.muParseBinds(opts.bind, element);
+		ev.opts = opts;
+		this.muCallPlugin("beforeIndexElement", ev);
+		if ((!opts.widget || indexWidget) && !opts.nocontent && element.children)
 		{
 			// Index children
 			var elements = [];
@@ -83,12 +176,26 @@ MuWidget.prototype = {
 				this.muIndexTree(elements[i], false, useName);
 			}
 		}
+		var widget = null;
 		if (opts.widget && !indexWidget)
 		{
 			// Initialize widget
-			this.muActivateWidget(element, opts);
+			widget = this.muActivateWidget(element, opts);
 		}
-		if (indexWidget && this['afterIndex']) this.afterIndex();
+		this.muAddEvents(opts, element, widget);
+		if (indexWidget)
+		{
+			if (this['afterIndex']) this.afterIndex();
+			for (var i = 0, l = this.muOnAfterIndex.length; i < l; i++)
+			{
+				this.muOnAfterIndex[i](this);
+			}
+		}
+	},
+
+	muRemoveSelf: function()
+	{
+		this.container.parentNode.removeChild(this.container);
 	},
 
 	muIndexForm: function(form)
@@ -134,8 +241,14 @@ MuWidget.prototype = {
 	muActivateWidget: function(element, opts, extraParams)
 	{
 		if (opts === undefined) opts = this.muGetElementOpts(element);
-		if (!window[opts.widget]) throw "Class '" + opts.widget + "' is not defined.";
-		var widget = new window[opts.widget](element, opts, this);
+		/* if (!window[opts.widget]) throw "Class '" + opts.widget + "' is not defined.";
+		var widget = new window[opts.widget](element, opts, this);*/
+
+		var widgetName = opts.widget;
+		var c = /* widgetName === "." ? MuWidget :*/ MuWidget.widgetClasses[widgetName] || window[widgetName];
+		if (!c) throw "Class '" + opts.widget + "' is not defined.";
+		var widget = new c(element, opts, this);
+
 		widget.muParent = this;
 		widget.muRoot = this.muRoot || this;
 		if (opts.params)
@@ -170,20 +283,46 @@ MuWidget.prototype = {
 	muWidgetFromTemplate: function(templateName, container, params, addMethod)
 	{
 		if (!addMethod) addMethod = 'appendChild';
-		if (typeof container == 'string') container = this.ui[container];
+		if (typeof container == 'string')
+		{
+			var containerName = container;
+			container = this.ui[container];
+			if (!container) throw new Error("Container with mu-id='" + containerName + "' not exists.");
+		} 
 		
 		var tmpElemementType = "div";
-		var tmpTemplate = this.muTemplates[templateName].toLowerCase();
+		var tmpTemplate = this.muTemplates[templateName];
+		if (!tmpTemplate) throw "No template named '" + templateName + "'.";
+		tmpTemplate = tmpTemplate.toLowerCase();
 		if (tmpTemplate.startsWith('<tr')) tmpElemementType = "tbody";
+		if (tmpTemplate.startsWith('<td') || tmpTemplate.startsWith('<th')) tmpElemementType = "tr";
 		if (tmpTemplate.startsWith('<tbody')) tmpElemementType = "table";
-		var element = document.createElement(tmpElemementType);
+		var element = document.createElementNS(container.namespaceURI, tmpElemementType);
 		element.innerHTML = this.muTemplates[templateName];
 		element = element.firstChild; 
 		// if (params) element.setAttribute('mu-params', JSON.stringify(params));
 		
 		if (container) container[addMethod](element);
 
-		return this.muActivateWidget(element, undefined, params);
+		var widget = this.muActivateWidget(element, undefined, params);
+		var opts = this.muGetElementOpts(element);
+		if (!opts.id) opts.id = templateName;
+		this.muAddEvents(opts, element, widget)
+
+		return widget;
+	},
+
+	muBindList: function(list, templateName, container, commonParams, finalCalback) 
+	{
+		var res = [];
+		for(var l = list.length, i = 0; i < l; i++)
+		{
+			var params = this.muMergeObjects(commonParams||{}, list[i]);
+			var obj = this.muWidgetFromTemplate(templateName, container, params);
+			if (finalCalback) finalCalback(obj);
+			res.push(obj);
+		}
+		return res;
 	},
 
 	muGetElementOpts: function(element)
@@ -215,7 +354,14 @@ MuWidget.prototype = {
 
 	muGetMethodCallback: function(name, context)
 	{
-		var self = context || this;
+		var obj = context || this;
+		//todo: blbne
+		while(name.startsWith("parent."))
+		{
+			if (!obj.muParent) throw "Widget of class '" + obj.constructor.name + "' has not parent.";
+			obj = obj.muParent;
+			name = name.substr(7);
+		}
 		var params = [];
 		var p = null;
 		if (-1 != (p = name.indexOf(':')))
@@ -223,8 +369,8 @@ MuWidget.prototype = {
 			params = JSON.parse('[' + name.substr(p + 1) + ']');
 			name = name.substr(0, p);
 		}
-		var method = this[name];
-		if (method === undefined) throw "Undefined method '" + name + "' in class '" + this.constructor.name + "'.";
+		var method = obj[name];
+		if (method === undefined) throw "Undefined method '" + name + "' in class '" + obj.constructor.name + "'.";
 		return function()
 		{
 			var callparams = [];
@@ -232,7 +378,7 @@ MuWidget.prototype = {
 			for(var i = 0, l = arguments.length; i < l; i++) callparams.push(arguments[i]);
 			// for(var item of params) callparams.push(item);
 			// for(var item of arguments) callparams.push(item);
-			return method.apply(self, callparams);
+			return method.apply(obj, callparams);
 		};
 	},
 
@@ -241,14 +387,25 @@ MuWidget.prototype = {
 		this.ui[name] = element;
 	},
 
-	muAddEvents: function(opts, element)
+	muAddEvents: function(opts, element, widget)
 	{
-		var tags = opts.tag ? opts.tag.split(" ") : null;
-		var autoMethodName, i, l;
+		var autoMethodName, /*i,*/ l;
 
-		for(i = 0, l = this.muOpts.bindEvents.length; i < l; i++)
+		var eventNames = [];
+		for(var i = 0, l = this.muOpts.bindEvents.length; i < l; i++) eventNames.push(this.muOpts.bindEvents[i]);
+		var wEvents = [];
+		if (widget)
 		{
-			var eventName = this.muOpts.bindEvents[i];
+			wEvents = widget.muEventNames();
+			for(var i = 0, l = wEvents.length; i < l; i++) eventNames.push(wEvents[i]);
+		}
+
+		var tags = opts.tag ? opts.tag.split(" ") : null;
+
+		for(var i = 0, l = eventNames.length; i < l; i++)
+		{
+			var eventName = eventNames[i];
+			var eventTarget = wEvents.indexOf(eventName) >= 0 ? widget : element;
 			var methodName = opts[eventName];
 			if (methodName === undefined)
 			{
@@ -260,7 +417,7 @@ MuWidget.prototype = {
 			} 
 			if (methodName)
 			{
-				this.muAddEvent(eventName, element, this.muGetMethodCallback(methodName));
+				this.muAddEvent(eventName, eventTarget, this.muGetMethodCallback(methodName));
 			}
 			if (tags)
 			{
@@ -269,7 +426,7 @@ MuWidget.prototype = {
 					autoMethodName = tags[i1] + this.muOpts.autoMethodNameSeparator + eventName;
 					if (this[autoMethodName] !== undefined)
 					{
-						this.muAddEvent(eventName, element, this.muGetMethodCallback(autoMethodName));
+						this.muAddEvent(eventName, eventTarget, this.muGetMethodCallback(autoMethodName));
 					}					
 				}
 			}
@@ -277,21 +434,22 @@ MuWidget.prototype = {
 		// init
 		if (tags)
 		{
-			for(i = 0, l = tags.length; i < l; i++)
+			for(var i = 0, l = tags.length; i < l; i++)
 			{
 				autoMethodName = tags[i] + this.muOpts.autoMethodNameSeparator + "init";
 				if (this[autoMethodName] !== undefined)
 				{
-					this.muGetMethodCallback(autoMethodName)(element);
+					this.muGetMethodCallback(autoMethodName)(eventTarget);
 				}					
 			}
 		}
-},
+	},
 
 	muAddEvent: function(eventName, element, callback)
 	{
-		element.addEventListener(eventName, function() {
-			callback(this);
+		element.addEventListener(eventName, function(ev) {
+			// return callback(this, ev);
+			return callback.apply(null, [this].concat(Array.from(arguments)));
 		});
 	},
 
@@ -309,16 +467,19 @@ MuWidget.prototype = {
 		}
 		else
 		{
-			if (typeof control === 'string') control = this.ui[control];
+			if (typeof control === 'string'){
+				if (!(control in this.ui)) throw new Error("Control with mu-id='" + control + "' not found.");
+				control = this.ui[control];
+			}
 			control.style.display = state ? null : "none";
 		}
 	},
 
 	muCallPlugin: function(eventName, eventArgs)
 	{
-		for(var i = 0, l = MuWidgetPlugIns.length; i < l; i++)
+		for(var i = 0, l = MuWidget.PlugIns.length; i < l; i++)
 		{
-			var plugin = MuWidgetPlugIns[i];
+			var plugin = MuWidget.PlugIns[i];
 			if (plugin[eventName]) plugin[eventName](eventArgs);
 		}
 	}
@@ -371,7 +532,25 @@ MuWidget.getChildWidgets = function(list, fn)
 	return ls;
 }
 
-if (typeof MuWidget_autostart != "undefined" ? MuWidget_autostart : false) MuWidget.startup();
+MuWidget.widgetClasses = {};
+MuWidget.PlugIns = [];
+MuWidget.preproc = {}
+
+MuWidget.registerAll = function()
+{
+	for(var i = 0; i < arguments.length; i++)
+	{
+		var classes = arguments[i];
+		for(var k in classes) MuWidget.widgetClasses[k] = classes[k];
+	}
+}
+MuWidget.registerAs = function(c, n)
+{
+	MuWidget.widgetClasses[n] = c;
+}
+
+
+// if (typeof MuWidget_autostart != "undefined" ? MuWidget_autostart : false) MuWidget.startup();
 
 /* function htmlFromString(htmlString) {
 	var div = document.createElement('div');
@@ -379,3 +558,4 @@ if (typeof MuWidget_autostart != "undefined" ? MuWidget_autostart : false) MuWid
 	return div.firstChild; 
 } */
 
+if (typeof exports != "undefined") exports.MuWidget = MuWidget;
