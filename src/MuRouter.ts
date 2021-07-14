@@ -140,7 +140,9 @@ export class MuRouter
 	{
 		let url = "";
 		let used = [];
-		const params = { ...this.persistentValues, ...currParams };
+		const params = { ...this.persistentValues };
+		for(const k in currParams)
+			if (currParams[k] !== null) params[k] = currParams[k];
 
 		if (!(name in this.routes)) throw new Error("No route '" + name + "'")
 		let route = this.routes[name];

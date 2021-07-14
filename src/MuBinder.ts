@@ -170,6 +170,12 @@ export class MuBinder
 					defaults.target = "value";
 			}
 		}
+		else if (mbo.element instanceof HTMLImageElement || mbo.element instanceof HTMLAudioElement || mbo.element instanceof HTMLVideoElement)
+		{
+			defaults.forBind = true;
+			defaults.forFetch = false;
+			defaults.target = "src";
+		}
 		else
 		{
 			defaults.forBind = true;
@@ -268,7 +274,7 @@ export class MuBinder
 		{
 			(element["widget"] as IMuWidget).muBindData(val);
 		}
-		else if (target === "foreach") {
+		else if (target === "foreach" || target === "@foreach") {
 			element.innerHTML = "";
 			for (const k in widget.muTemplateParents) {
 				if (element === widget.muTemplateParents[k]) {
@@ -363,7 +369,8 @@ export class MuBinder
 		{
 			case "@widget":
 				return (element["widget"] as IMuWidget).muFetchData();
-			case "foreach": //todo:
+			case "foreach":
+			case "@foreach":
 				return widget.muGetChildWidgets<IMuWidget>(element).map(itemWidget => itemWidget.muFetchData());
 			default:
 				if (target.startsWith("."))

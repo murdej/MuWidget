@@ -35,7 +35,11 @@ MuWidget.prototype = {
 		this.muOpts = this.muMergeObjects(
 			{
 				attributePrefix: "mu-",
-				bindEvents: ['click', 'dblclick', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'blur', 'change', 'focus', 'select', 'submit', 'keyup', 'keydown', 'keypress', 'scroll'],
+				bindEvents: [
+					'click', 'dblclick', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'blur',
+					'change', 'focus', 'select', 'submit', 'keyup', 'keydown', 'keypress', 'scroll',
+					'drag', 'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'drop'
+				],
 				autoMethodNameSeparator: "_"
 			},
 			opts ? opts : {}
@@ -94,20 +98,6 @@ MuWidget.prototype = {
 		var opts = ev.opts || this.muGetElementOpts(element);
 		if (opts.preproc)
 		{
-			/* var pl = opts.preproc.indexOf("[");
-			var pd = opts.preproc.indexOf("{");
-			var mode = null;
-			var p;
-			if (pl >= 0 && pd >= 0)
-			{
-				// mode = pl < pd ? "function" : "class";
-				p = Math.min(pl, pd);
-			}
-			else
-			{
-				// mode = pd >= 0 ? "class" : "function";
-				p = Math.max(pl, pd);
-			} */
 			var p = opts.preproc.indexOf(" ");
 			var name = opts.preproc;
 			var paramsStr = "";

@@ -1,6 +1,6 @@
 import { IMuWidget } from "./IMuWidget";
 
-export class UiFlashMessage extends IMuWidget
+export class UiFlashMessageContainer extends IMuWidget
 {
 	public afterIndex()
 	{
@@ -14,27 +14,27 @@ export class UiFlashMessage extends IMuWidget
 			: "none";
 	}
 
-	public add(text : string) : UiLoaderItem
+	public add(text : string) : UiFlashMessage
 	{
-		var item = this.muWidgetFromTemplate("item", "items", { text: text }) as UiLoaderItem;
+		var item = this.muWidgetFromTemplate("item", "items", { text: text }) as UiFlashMessage;
 		this.updateVisibility();
 		return item;
 	}
 }
 
-export class UiLoaderItem extends IMuWidget
+export class UiFlashMessage extends IMuWidget
 {
 	public text : string;
 
 	public afterIndex()
 	{
-		this.ui.text.innerText = this.text;
+		if (this.text) this.ui.text.innerText = this.text;
 	}
 
 	public remove() : void
 	{
 		this.muRemoveSelf();
-		(this.muParent as UiFlashMessage).updateVisibility();
+		(this.muParent as UiFlashMessageContainer).updateVisibility();
 	}
 
 	public bClose_click() : void

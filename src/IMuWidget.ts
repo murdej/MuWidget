@@ -42,7 +42,7 @@ export class IMuWidget // extends MuWidget
 	public muBindData(srcData : any)
 	{
 		MuBinder.bindData(this.muBindOpts, srcData, this);
-		this.muAferBindData();
+		this.muAfterBindData();
 	}
 
 	public muFetchData() : any
@@ -58,7 +58,7 @@ export class IMuWidget // extends MuWidget
 
 	public muEventNames() : string[] { return []; }
 
-	protected muAferBindData() { }
+	protected muAfterBindData() { }
 }
 
 export type AnyElement = HTMLElement|SVGElement;

@@ -1,0 +1,27 @@
+{
+  "name": "mu-widget",
+  "version": "1.0.0",
+  "description": "Simple javascript widget creation",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build" : "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/murdej/MuWidget.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/murdej/MuWidget/issues"
+  },
+  "homepage": "https://github.com/murdej/MuWidget#readme",
+  "devDependencies": {
+    "typescript": "^4.3.5"
+  }
+}
