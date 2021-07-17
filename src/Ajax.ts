@@ -2,9 +2,9 @@ export class Ajax
 {
 	public url : string;
 
-	public query : Record<string, string>;
+	public query : Record<string, string> = {};
 
-	public formData : Record<string, string>;
+	public formData : Record<string, string> = null;
 
 	public data : any;
 
@@ -18,11 +18,14 @@ export class Ajax
 
 	public requestHeaders: Record<string, string> = {};
 
-	public jsonResult: boolean;
+	public jsonResult: boolean = false;
+
+	public XMLHttpRequestClass : any|null = null;
 
 	constructor(url : string)
 	{
 		this.url = url;
+		if (typeof XMLHttpRequest !== "undefined") this.XMLHttpRequestClass = XMLHttpRequest;
 	}
 
 	public setQuery(query : Record<string, string>) : Ajax
@@ -70,7 +73,7 @@ export class Ajax
 	}
 
 	protected _call(resolve, reject) {
-		const req = new XMLHttpRequest();
+		const req : XMLHttpRequest = new this.XMLHttpRequestClass();
 		req.open(this.getMethod(), this.getFullUrl(), true);
 		// let i = 1;
 		//console.log("open");
