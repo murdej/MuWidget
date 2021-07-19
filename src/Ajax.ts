@@ -1,31 +1,34 @@
+import axios, {AxiosRequestConfig} from "axios";
+
+
 export class Ajax
 {
 	public url : string;
 
 	public query : Record<string, string> = {};
 
-	public formData : Record<string, string> = null;
+	public formData : Record<string, string>|null = null;
 
 	public data : any;
 
-	public method : HttpMethod;
+	public method : HttpMethod = "GET";
 
-	public thenCallback : (data) => void
+	public thenCallback : ((data : any) => void)|null = null;
 
-	private errorCallback: (data) => void;
+	private errorCallback: ((data : any) => void)|null = null;
 
-	public requestContentType: string;
+	public requestContentType: string = "";
 
 	public requestHeaders: Record<string, string> = {};
 
 	public jsonResult: boolean = false;
 
-	public XMLHttpRequestClass : any|null = null;
+	public useLibrary : UseLibrary;
 
 	constructor(url : string)
 	{
 		this.url = url;
-		if (typeof XMLHttpRequest !== "undefined") this.XMLHttpRequestClass = XMLHttpRequest;
+		this.useLibrary =  (typeof XMLHttpRequest !== "undefined") ? "XMLHttpRequest" : "axios";
 	}
 
 	public setQuery(query : Record<string, string>) : Ajax
@@ -46,13 +49,13 @@ export class Ajax
 		return this;
 	}
 
-	public then(then : (data) => void)
+	public then(then : (data: any) => void)
 	{
 		this.thenCallback = then;
 		return this;
 	}
 
-	public error(error : (data) => void)
+	public error(error : (data: any) => void)
 	{
 		this.errorCallback = error;
 		return this;
@@ -69,43 +72,72 @@ export class Ajax
 
 	public call() : void
 	{
-		this._call(this.thenCallback, this.errorCallback);
+		this._call(this.thenCallback || ((v)=>undefined), this.errorCallback || ((v)=>undefined));
 	}
 
-	protected _call(resolve, reject) {
-		const req : XMLHttpRequest = new this.XMLHttpRequestClass();
-		req.open(this.getMethod(), this.getFullUrl(), true);
-		// let i = 1;
-		//console.log("open");
-		req.onload = (e : ProgressEvent) => {
-			if (req.status >= 200 && req.status < 400) {
-				//console.log("onload " + (i++));
-				let resp = req.response;
-				if (this.jsonResult && typeof resp === "string") resp = JSON.parse(resp);
-				resolve(resp);
-			}
-			else
-			{
-				reject(req.response);
-			}
-		};
-		req.onerror = (e : ProgressEvent) => reject(e);
-		req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-		const postData = this.getPostData();
-		const setHeaders = () => {
-			for(const hn in this.requestHeaders) req.setRequestHeader(hn, this.requestHeaders[hn]);
-		}
+	protected _call(resolve : (value: any)=>any, reject : (value: any)=>any) {
 
-		if (postData)
+		const postData = this.getPostData();
+		switch (this.useLibrary)
 		{
-			req.setRequestHeader("Content-Type", this.requestContentType || postData.contentType);
-			setHeaders();
-			req.send(postData.data);
-		}
-		else
-		{
-			setHeaders();
-			req.send();
+			case "axios":
+				const config : AxiosRequestConfig = {
+					method: postData ? "POST" : "GET",
+					url: this.getFullUrl(),
+					headers: { ...this.requestHeaders }
+				};
+
+				if (postData) {
+					config.data = postData.data;
+					config.headers["Content-Type"] = this.requestContentType || postData.contentType;
+				}
+
+				axios.request(config)
+					.then(res => {
+						if (res.status >= 200 && res.status < 400) {
+							resolve(res.data);
+						} else {
+							reject(res);
+						}
+					})
+					.catch(exc => {
+						reject(exc);
+					});
+
+				break;
+
+			case "XMLHttpRequest":
+				const req : XMLHttpRequest = new XMLHttpRequest();
+				req.open(this.getMethod(), this.getFullUrl(), true);
+				req.onload = (e : ProgressEvent) => {
+					if (req.status >= 200 && req.status < 400) {
+						let resp = req.response;
+						if (this.jsonResult && typeof resp === "string") resp = JSON.parse(resp);
+						resolve(resp);
+					}
+					else
+					{
+						reject(req.response);
+					}
+				};
+				req.onerror = (e : ProgressEvent) => reject(e);
+				req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+				const setHeaders = () => {
+					for(const hn in this.requestHeaders) req.setRequestHeader(hn, this.requestHeaders[hn]);
+				}
+
+				if (postData)
+				{
+					req.setRequestHeader("Content-Type", this.requestContentType || postData.contentType || "application/octet-stream");
+					setHeaders();
+					req.send(postData.data);
+				}
+				else
+				{
+					setHeaders();
+					req.send();
+				}
+				break;
 		}
 	}
 
@@ -182,3 +214,4 @@ export class Ajax
 
 export type HttpMethod = "GET"|"POST"|"HEAD"|"PUT"|"PATCH"|null;
 
+export type UseLibrary = "XMLHttpRequest"|"axios";

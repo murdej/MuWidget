@@ -1,18 +1,21 @@
-import {Ajax} from "./Ajax";
+import {Ajax, UseLibrary} from "./Ajax";
 
 export class BaseCL {
 	public context : any = {};
 
-	public url : string;
+	public url : string = "";
 
-	public onLoading : ()=>any = null;
+	public onLoading : (()=>any)|null = null;
 
-	public onLoaded : (any)=>void = null;
+	public onLoaded : ((res : any)=>void)|null = null;
 
-	public onError : (any)=>void = null;
+	public onError : ((error : any)=>void)|null = null;
 
-	protected callMethod(methodName : string, args/* : IArguments*/) : Promise<any> {
+	public useMethod: UseLibrary|null = null;
+
+	protected callMethod(methodName : string, args : any/* : IArguments*/) : Promise<any> {
 		const ajax = new Ajax(this.url);
+		// if (this.ajaxXMLHttpRequestClass) ajax.XMLHttpRequestClass  = this.ajaxXMLHttpRequestClass;
 		// ajax.requestContentType = "application/json";
 		ajax.setData({
 			name: methodName,

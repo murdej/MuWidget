@@ -23,5 +23,8 @@
   "homepage": "https://github.com/murdej/MuWidget#readme",
   "devDependencies": {
     "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "axios": "^0.21.1"
   }
 }
