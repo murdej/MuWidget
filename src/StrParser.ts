@@ -5,9 +5,9 @@ export class StrParser
 
 	public position : number = 0;
 
-	public lastMark : StrParserMark = null;
+	public lastMark : StrParserMark|null = null;
 
-	public debugMode : boolean;
+	public debugMode : boolean = false;
 
 	constructor(str : string) {
 		this.str = str;
@@ -16,9 +16,10 @@ export class StrParser
 	public findNext(chunk : string|string[], skipChunk : boolean = false) : StrParserMark|null
 	{
 		if (typeof chunk === "string") chunk = [chunk];
-		let firstPos : number|null = null;
-		let firstChunk : string;
-		let firstChunkNum : number;
+		// let firstPos : number|null = null;
+		let firstPos : number = 0;
+		let firstChunk : string|null = null;
+		let firstChunkNum : number = 0;
 		let i = 0;
 		for(const ch of chunk)
 		{
@@ -77,13 +78,13 @@ export class StrParser
 	protected _onEndChunk = false;
 	public toEndChunk()
 	{
-		const l = this._onEndChunk ? 0 : (this.lastMark?.chunk.length || 0);
+		const l = this._onEndChunk ? 0 : (this.lastMark?.chunk?.length || 0);
 		this.moverel(l);
 		this._onEndChunk = true;
 		this.debug("toEndChunk +" + l.toString());
 	}
 
-	protected debug(msg)
+	protected debug(msg : any)
 	{
 		if (this.debugMode)
 		{

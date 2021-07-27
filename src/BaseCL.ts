@@ -5,7 +5,7 @@ export class BaseCL {
 
 	public url : string = "";
 
-	public onLoading : (()=>any)|null = null;
+	public onLoading : ((data : any) => any)|null = null;
 
 	public onLoaded : ((res : any)=>void)|null = null;
 
@@ -17,14 +17,15 @@ export class BaseCL {
 		const ajax = new Ajax(this.url);
 		// if (this.ajaxXMLHttpRequestClass) ajax.XMLHttpRequestClass  = this.ajaxXMLHttpRequestClass;
 		// ajax.requestContentType = "application/json";
-		ajax.setData({
+		const srcData = {
 			name: methodName,
 			context: this.context,
 			pars: [...args]
-		});
+		};
+		ajax.setData(srcData);
 		return new Promise((resolve, reject) => {
 			let loadingHandle : any;
-			if (this.onLoading) loadingHandle = this.onLoading();
+			if (this.onLoading) loadingHandle = this.onLoading(srcData);
 			ajax.promise().then((response : CallMethodResponse|string) => {
 				if (typeof response === "string") response = JSON.parse(response) as CallMethodResponse;
 				if (response.status == "ok")

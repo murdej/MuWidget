@@ -5,8 +5,8 @@ export declare class UiTabs extends IMuWidget {
     private liClassName;
     private aClassName;
     private aActiveClassName;
-    onSelectTab: (muId: string) => void;
-    selectedTabId: string;
+    onSelectTab: ((muId: string) => void) | null;
+    selectedTabId: string | null;
     afterIndex(): void;
     private makeTabs;
     selectTab(selectedMuId: string): void;

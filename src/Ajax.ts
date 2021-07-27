@@ -11,7 +11,7 @@ export class Ajax
 
 	public data : any;
 
-	public method : HttpMethod = "GET";
+	public method : HttpMethod|null = null;
 
 	public thenCallback : ((data : any) => void)|null = null;
 

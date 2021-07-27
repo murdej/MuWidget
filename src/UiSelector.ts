@@ -8,7 +8,7 @@ export class UiSelector extends IMuWidget
 
 	public containerTag: string = "span";
 
-	public bindItemValues: (item : SelectorItem, container : HTMLElement) => void;
+	public bindItemValues: ((item : SelectorItem, container : HTMLElement) => void)|null = null;
 
 	public containerCssClass: string = "";
 
@@ -16,11 +16,11 @@ export class UiSelector extends IMuWidget
 
 	public valueField: string = "value";
 
-	public onchange: (ev : SelectorChangeEvent) => void;
+	public onchange: ((ev : SelectorChangeEvent) => void)|null = null;
 
-	private value: SelectorValue;
+	private value: SelectorValue|null = null;
 
-	public  getActive() : SelectorValue
+	public  getActive() : SelectorValue|null
 	{
 		return this.value;
 	}

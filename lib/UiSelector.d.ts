@@ -3,13 +3,13 @@ export declare class UiSelector extends IMuWidget {
     items: Record<SelectorValue, SelectorItem>;
     cssClassActive: string;
     containerTag: string;
-    bindItemValues: (item: SelectorItem, container: HTMLElement) => void;
+    bindItemValues: ((item: SelectorItem, container: HTMLElement) => void) | null;
     containerCssClass: string;
     textField: string;
     valueField: string;
-    onchange: (ev: SelectorChangeEvent) => void;
+    onchange: ((ev: SelectorChangeEvent) => void) | null;
     private value;
-    getActive(): SelectorValue;
+    getActive(): SelectorValue | null;
     setActive(value: SelectorValue): void;
     bindValues(items: SelectorItem[]): void;
     addItem(item: SelectorItem, before?: SelectorValue | "first" | null): void;

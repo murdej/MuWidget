@@ -1,7 +1,7 @@
 export declare class StrParser {
     protected str: string;
     position: number;
-    lastMark: StrParserMark;
+    lastMark: StrParserMark | null;
     debugMode: boolean;
     constructor(str: string);
     findNext(chunk: string | string[], skipChunk?: boolean): StrParserMark | null;
