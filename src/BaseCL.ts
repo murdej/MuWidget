@@ -7,9 +7,9 @@ export class BaseCL {
 
 	public onLoading : ((data : any) => any)|null = null;
 
-	public onLoaded : ((res : any)=>void)|null = null;
+	public onLoaded : ((handle : any, data : any)=>void)|null = null;
 
-	public onError : ((error : any)=>void)|null = null;
+	public onError : ((handle : any, error : any)=>void)|null = null;
 
 	public useMethod: UseLibrary|null = null;
 
@@ -30,15 +30,16 @@ export class BaseCL {
 				if (typeof response === "string") response = JSON.parse(response) as CallMethodResponse;
 				if (response.status == "ok")
 				{
-					if (this.onLoaded) this.onLoaded(loadingHandle);
+					if (this.onLoaded) this.onLoaded(loadingHandle, response);
 					resolve(response.response);
 				}
 				else
 				{
-					if (this.onLoaded) this.onLoaded(loadingHandle);
+					if (this.onLoaded) this.onLoaded(loadingHandle, response);
 					if (reject) reject(response.exception);
 					else {
 						// alert("Chyba aplikace: " + response.Exception.Message);
+						if (this.onError) this.onError(loadingHandle, response.exception);
 						throw new Error(response.exception);
 					}
 				}
