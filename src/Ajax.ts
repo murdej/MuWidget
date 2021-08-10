@@ -21,9 +21,13 @@ export class Ajax
 
 	public requestHeaders: Record<string, string> = {};
 
+	public responseHeaders: Record<string, string> = {};
+
 	public jsonResult: boolean = false;
 
 	public useLibrary : UseLibrary;
+
+	public responseType: XMLHttpRequestResponseType = "";
 
 	constructor(url : string)
 	{
@@ -109,7 +113,9 @@ export class Ajax
 			case "XMLHttpRequest":
 				const req : XMLHttpRequest = new XMLHttpRequest();
 				req.open(this.getMethod(), this.getFullUrl(), true);
+				req.responseType = this.responseType;
 				req.onload = (e : ProgressEvent) => {
+					this.responseHeaders = parseResponseHeaders(req.getAllResponseHeaders());
 					if (req.status >= 200 && req.status < 400) {
 						let resp = req.response;
 						if (this.jsonResult && typeof resp === "string") resp = JSON.parse(resp);
@@ -215,3 +221,22 @@ export class Ajax
 export type HttpMethod = "GET"|"POST"|"HEAD"|"PUT"|"PATCH"|null;
 
 export type UseLibrary = "XMLHttpRequest"|"axios";
+
+function parseResponseHeaders(headerStr : string) : Record<string, string> {
+	const headers : Record<string, string> = {};
+	if (!headerStr) return headers;
+	
+	let headerPairs = headerStr.split('\u000d\u000a');
+	for (let i = 0; i < headerPairs.length; i++) {
+		let headerPair = headerPairs[i];
+
+		let index = headerPair.indexOf('\u003a\u0020');
+		if (index > 0) {
+			let key = headerPair.substring(0, index);
+			let val = headerPair.substring(index + 2);
+			headers[key] = val;
+		}
+	}
+
+	return headers;
+}
